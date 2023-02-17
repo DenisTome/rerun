@@ -430,7 +430,7 @@
         <span class="self">self</span>.send_msg_msg(MsgMsg::LogMsg(log_msg));
     }
 
-    <span class="doccomment">/// Stall untill all messages so far has been sent.
+    <span class="doccomment">/// Stall until all messages so far has been sent.
     </span><span class="kw">pub fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="macro">re_log::debug!</span>(<span class="string">&quot;Flushing message queue…&quot;</span>);
         <span class="self">self</span>.send_msg_msg(MsgMsg::Flush);
