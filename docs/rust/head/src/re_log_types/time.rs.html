@@ -271,6 +271,24 @@
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::ops::RangeInclusive;
 
 <span class="doccomment">/// A date-time represented as nanoseconds since unix epoch
@@ -329,19 +347,37 @@
             );
             <span class="kw">match </span>datetime {
                 chrono::LocalResult::Single(datetime) =&gt; {
+                    <span class="kw">let </span>is_whole_second = nanos_since_epoch % <span class="number">1_000_000_000 </span>== <span class="number">0</span>;
+                    <span class="kw">let </span>is_whole_millisecond = nanos_since_epoch % <span class="number">1_000_000 </span>== <span class="number">0</span>;
+
+                    <span class="kw">let </span>time_format = <span class="kw">if </span>is_whole_second {
+                        <span class="string">&quot;%H:%M:%SZ&quot;
+                    </span>} <span class="kw">else if </span>is_whole_millisecond {
+                        <span class="string">&quot;%H:%M:%S%.3fZ&quot;
+                    </span>} <span class="kw">else </span>{
+                        <span class="string">&quot;%H:%M:%S%.6fZ&quot;
+                    </span>};
+
                     <span class="kw">if </span>datetime.date_naive() == chrono::offset::Utc::now().date_naive() {
-                        datetime.format(<span class="string">&quot;%H:%M:%S%.6fZ&quot;</span>).to_string()
+                        datetime.format(time_format).to_string()
                     } <span class="kw">else </span>{
-                        datetime.format(<span class="string">&quot;%Y-%m-%d %H:%M:%S%.6fZ&quot;</span>).to_string()
+                        <span class="kw">let </span>date_format = <span class="macro">format!</span>(<span class="string">&quot;%Y-%m-%d {time_format}&quot;</span>);
+                        datetime.format(<span class="kw-2">&amp;</span>date_format).to_string()
                     }
                 }
                 chrono::LocalResult::None =&gt; <span class="string">&quot;Invalid timestamp&quot;</span>.to_owned(),
                 chrono::LocalResult::Ambiguous(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="string">&quot;Ambiguous timestamp&quot;</span>.to_owned(),
             }
         } <span class="kw">else </span>{
-            <span class="kw">let </span>secs = nanos_since_epoch <span class="kw">as </span>f64 * <span class="number">1e-9</span>;
-            <span class="comment">// assume relative time
-            </span><span class="macro">format!</span>(<span class="string">&quot;{secs:+.03}s&quot;</span>)
+            <span class="comment">// Relative time
+            </span><span class="kw">let </span>secs = nanos_since_epoch <span class="kw">as </span>f64 * <span class="number">1e-9</span>;
+
+            <span class="kw">let </span>is_whole_second = nanos_since_epoch % <span class="number">1_000_000_000 </span>== <span class="number">0</span>;
+            <span class="kw">if </span>is_whole_second {
+                <span class="macro">format!</span>(<span class="string">&quot;{secs:+.0}s&quot;</span>)
+            } <span class="kw">else </span>{
+                <span class="macro">format!</span>(<span class="string">&quot;{secs:+.3}s&quot;</span>)
+            }
         }
     }
 

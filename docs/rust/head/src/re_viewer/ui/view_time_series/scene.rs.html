@@ -226,6 +226,8 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
 </pre><pre class="rust"><code><span class="kw">use crate</span>::{
     ui::{annotations::AnnotationMap, DefaultColor, SceneQuery},
     ViewerContext,
@@ -346,13 +348,15 @@
                             .color(color.map(|c| c.to_array()).as_ref(), default_color);
                         <span class="kw">let </span>label = annotation_info.label(label.map(|l| l.into()).as_ref());
 
+                        <span class="kw">const </span>DEFAULT_RADIUS: f32 = <span class="number">0.75</span>;
+
                         points.push(PlotPoint {
                             time: time.unwrap().as_i64(), <span class="comment">// scalars cannot be timeless
                             </span>value: scalar.into(),
                             attrs: PlotPointAttrs {
                                 label,
                                 color,
-                                radius: radius.map_or(<span class="number">1.0</span>, |r| r.into()),
+                                radius: radius.map_or(DEFAULT_RADIUS, |r| r.into()),
                                 scattered: props.map_or(<span class="bool-val">false</span>, |props| props.scattered),
                             },
                         });
@@ -397,7 +401,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>line: PlotSeries = PlotSeries {
             label: line_label.to_owned(),
             color: attrs.color,
-            width: attrs.radius,
+            width: <span class="number">2.0 </span>* attrs.radius,
             kind: <span class="kw">if </span>attrs.scattered {
                 PlotSeriesKind::Scatter
             } <span class="kw">else </span>{
@@ -427,7 +431,7 @@
                     PlotSeries {
                         label: line_label.to_owned(),
                         color: attrs.color,
-                        width: attrs.radius,
+                        width: <span class="number">2.0 </span>* attrs.radius,
                         kind,
                         points: Vec::with_capacity(num_points - i),
                     },
