@@ -369,7 +369,7 @@
         })
     }
 
-    <span class="kw">pub fn </span>frame_maintenance(
+    <span class="kw">pub fn </span>begin_frame(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         device: <span class="kw-2">&amp;</span>wgpu::Device,
         frame_index: u64,
@@ -394,7 +394,7 @@
             <span class="comment">// The frame counter just got bumped by one. So any shader that has `frame_created`,
             // equal the current frame now, must have been recompiled since the user didn&#39;t have a
             // chance yet to add new shaders for this frame!
-            // (note that this assumes that shader `frame_maintenance` happens before pipeline `frame_maintenance`)
+            // (note that this assumes that shader `begin_frame` happens before pipeline `begin_frame`)
             </span><span class="kw">if </span>frame_created &lt; frame_index {
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }

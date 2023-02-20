@@ -2178,7 +2178,7 @@
                 .paint_callback_resources
                 .get::&lt;re_renderer::RenderContext&gt;()
                 .unwrap();
-            <span class="comment">// Query statistics before frame_maintenance as this might be more accurate if there&#39;s resources that we recreate every frame.
+            <span class="comment">// Query statistics before begin_frame as this might be more accurate if there&#39;s resources that we recreate every frame.
             </span>render_ctx.gpu_resources.statistics()
         };
 
@@ -2241,7 +2241,7 @@
                         .paint_callback_resources
                         .get_mut::&lt;re_renderer::RenderContext&gt;()
                         .unwrap();
-                    render_ctx.frame_maintenance();
+                    render_ctx.begin_frame();
 
                     <span class="kw">if </span>log_db.is_empty() {
                         wait_screen_ui(ui, <span class="kw-2">&amp;</span><span class="self">self</span>.rx);

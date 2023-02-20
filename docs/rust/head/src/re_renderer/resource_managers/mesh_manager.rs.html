@@ -134,8 +134,8 @@
         <span class="self">self</span>.manager.get(handle)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>frame_maintenance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
-        <span class="self">self</span>.manager.frame_maintenance(frame_index);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>begin_frame(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
+        <span class="self">self</span>.manager.begin_frame(frame_index);
     }
 }
 </code></pre></div>

@@ -208,7 +208,7 @@
             .get_or_create(desc, |desc| desc.create_shader_module(device, resolver))
     }
 
-    <span class="kw">pub fn </span>frame_maintenance&lt;Fs: FileSystem&gt;(
+    <span class="kw">pub fn </span>begin_frame&lt;Fs: FileSystem&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         device: <span class="kw-2">&amp;</span>wgpu::Device,
         resolver: <span class="kw-2">&amp;mut </span>FileResolver&lt;Fs&gt;,

@@ -118,7 +118,7 @@
         <span class="self">self</span>.pool.get_resource(handle)
     }
 
-    <span class="kw">pub fn </span>frame_maintenance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
+    <span class="kw">pub fn </span>begin_frame(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
         <span class="self">self</span>.pool.current_frame_index = frame_index;
     }
 

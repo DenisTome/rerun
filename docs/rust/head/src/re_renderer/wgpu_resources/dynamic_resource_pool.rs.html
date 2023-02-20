@@ -332,10 +332,6 @@
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{hash_map::Entry, HashMap},
     fmt::Debug,
@@ -362,7 +358,7 @@
 
     <span class="doccomment">/// Handles to all alive resources.
     /// We story any ref counted handle we give out in [`DynamicResourcePool::alloc`] here in order to keep it alive.
-    /// Every [`DynamicResourcePool::frame_maintenance`] we check if the pool is now the only owner of the handle
+    /// Every [`DynamicResourcePool::begin_frame`] we check if the pool is now the only owner of the handle
     /// and if so mark it as deallocated.
     /// Being a [`SecondaryMap`] allows us to upgrade &quot;weak&quot; handles to strong handles,
     /// something required by [`super::GpuBindGroupPool`]
@@ -429,11 +425,7 @@
             })
     }
 
-    <span class="kw">pub fn </span>frame_maintenance(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        frame_index: u64,
-        <span class="kw-2">mut </span>on_destroy_resource: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Res),
-    ) {
+    <span class="kw">pub fn </span>begin_frame(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64, <span class="kw-2">mut </span>on_destroy_resource: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Res)) {
         <span class="self">self</span>.current_frame_index = frame_index;
 
         <span class="comment">// Throw out any resources that we haven&#39;t reclaimed last frame.
@@ -544,7 +536,7 @@
         </span>{
             <span class="kw">let </span>drop_counter_before = drop_counter.load(Ordering::Acquire);
             <span class="kw">let </span><span class="kw-2">mut </span>called_destroy = <span class="bool-val">false</span>;
-            pool.frame_maintenance(<span class="number">1</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
+            pool.begin_frame(<span class="number">1</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
 
             <span class="macro">assert!</span>(!called_destroy);
             <span class="macro">assert_eq!</span>(drop_counter_before, drop_counter.load(Ordering::Acquire),);
@@ -559,9 +551,9 @@
         </span>{
             <span class="kw">let </span>drop_counter_before = drop_counter.load(Ordering::Acquire);
             <span class="kw">let </span><span class="kw-2">mut </span>called_destroy = <span class="bool-val">false</span>;
-            pool.frame_maintenance(<span class="number">2</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
+            pool.begin_frame(<span class="number">2</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
             <span class="macro">assert!</span>(!called_destroy);
-            pool.frame_maintenance(<span class="number">3</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
+            pool.begin_frame(<span class="number">3</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
             <span class="macro">assert!</span>(called_destroy);
             <span class="kw">let </span>drop_counter_now = drop_counter.load(Ordering::Acquire);
             <span class="macro">assert_eq!</span>(
@@ -586,10 +578,10 @@
             drop(handle1);
 
             <span class="kw">let </span><span class="kw-2">mut </span>called_destroy = <span class="bool-val">false</span>;
-            pool.frame_maintenance(<span class="number">4</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
+            pool.begin_frame(<span class="number">4</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
             <span class="macro">assert!</span>(!called_destroy);
             <span class="macro">assert_eq!</span>(drop_counter_before, drop_counter.load(Ordering::Acquire),);
-            pool.frame_maintenance(<span class="number">5</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
+            pool.begin_frame(<span class="number">5</span>, |<span class="kw">_</span>| called_destroy = <span class="bool-val">true</span>);
             <span class="macro">assert!</span>(called_destroy);
             <span class="macro">assert_eq!</span>(
                 drop_counter_before + <span class="number">1</span>,
@@ -666,8 +658,8 @@
         <span class="comment">// Query with invalid handle
         </span><span class="kw">let </span>inner_handle = <span class="kw-2">*</span>handle;
         drop(handle);
-        pool.frame_maintenance(<span class="number">0</span>, |<span class="kw">_</span>| {});
-        pool.frame_maintenance(<span class="number">1</span>, |<span class="kw">_</span>| {});
+        pool.begin_frame(<span class="number">0</span>, |<span class="kw">_</span>| {});
+        pool.begin_frame(<span class="number">1</span>, |<span class="kw">_</span>| {});
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             pool.get_resource(inner_handle),
             <span class="prelude-val">Err</span>(PoolError::ResourceNotAvailable)

@@ -395,11 +395,11 @@
     <span class="doccomment">/// Call this at the beginning of a new frame.
     ///
     /// Updates internal book-keeping, frame allocators and executes delayed events like shader reloading.
-    </span><span class="kw">pub fn </span>frame_maintenance(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+    </span><span class="kw">pub fn </span>begin_frame(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.frame_index += <span class="number">1</span>;
 
         <span class="comment">// Tick the error tracker so that it knows when to reset!
-        // Note that we&#39;re ticking on frame_maintenance rather than raw frames, which
+        // Note that we&#39;re ticking on begin_frame rather than raw frames, which
         // makes a world of difference when we&#39;re in a poisoned state.
         </span><span class="attr">#[cfg(all(not(target_arch = <span class="string">&quot;wasm32&quot;</span>), debug_assertions))] </span><span class="comment">// native debug build
         </span><span class="self">self</span>.err_tracker.tick();
@@ -412,8 +412,8 @@
             <span class="macro">re_log::debug!</span>(<span class="question-mark">?</span>modified_paths, <span class="string">&quot;got some filesystem events&quot;</span>);
         }
 
-        <span class="self">self</span>.mesh_manager.frame_maintenance(<span class="self">self</span>.frame_index);
-        <span class="self">self</span>.texture_manager_2d.frame_maintenance(<span class="self">self</span>.frame_index);
+        <span class="self">self</span>.mesh_manager.begin_frame(<span class="self">self</span>.frame_index);
+        <span class="self">self</span>.texture_manager_2d.begin_frame(<span class="self">self</span>.frame_index);
 
         {
             <span class="kw">let </span>WgpuResourcePools {
@@ -429,13 +429,13 @@
 
             // Shader module maintenance must come before render pipelines because render pipeline
             // recompilation picks up all shaders that have been recompiled this frame.
-            </span>shader_modules.frame_maintenance(
+            </span>shader_modules.begin_frame(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.device,
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.resolver,
                 <span class="self">self</span>.frame_index,
                 <span class="kw-2">&amp;</span>modified_paths,
             );
-            render_pipelines.frame_maintenance(
+            render_pipelines.begin_frame(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.device,
                 <span class="self">self</span>.frame_index,
                 shader_modules,
@@ -444,14 +444,14 @@
 
             <span class="comment">// Bind group maintenance must come before texture/buffer maintenance since it
             // registers texture/buffer use
-            </span>bind_groups.frame_maintenance(<span class="self">self</span>.frame_index, textures, buffers, samplers);
+            </span>bind_groups.begin_frame(<span class="self">self</span>.frame_index, textures, buffers, samplers);
 
-            textures.frame_maintenance(<span class="self">self</span>.frame_index);
-            buffers.frame_maintenance(<span class="self">self</span>.frame_index);
+            textures.begin_frame(<span class="self">self</span>.frame_index);
+            buffers.begin_frame(<span class="self">self</span>.frame_index);
 
-            pipeline_layouts.frame_maintenance(<span class="self">self</span>.frame_index);
-            bind_group_layouts.frame_maintenance(<span class="self">self</span>.frame_index);
-            samplers.frame_maintenance(<span class="self">self</span>.frame_index);
+            pipeline_layouts.begin_frame(<span class="self">self</span>.frame_index);
+            bind_group_layouts.begin_frame(<span class="self">self</span>.frame_index);
+            samplers.begin_frame(<span class="self">self</span>.frame_index);
         }
     }
 }

@@ -230,9 +230,9 @@
     }
 
     <span class="doccomment">/// Called by `RenderContext` every frame. Updates statistics and may free unused textures.
-    </span><span class="kw">pub fn </span>frame_maintenance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
+    </span><span class="kw">pub fn </span>begin_frame(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
         <span class="self">self</span>.pool
-            .frame_maintenance(frame_index, |res| res.texture.destroy());
+            .begin_frame(frame_index, |res| res.texture.destroy());
     }
 
     <span class="doccomment">/// Takes strong texture handle to ensure the user is still holding on to the texture.
