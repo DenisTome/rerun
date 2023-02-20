@@ -388,7 +388,7 @@
         _buffers: <span class="kw-2">&amp;mut </span>GpuBufferPool,
         _samplers: <span class="kw-2">&amp;mut </span>GpuSamplerPool,
     ) {
-        <span class="self">self</span>.pool.frame_maintenance(frame_index);
+        <span class="self">self</span>.pool.frame_maintenance(frame_index, |_res| {});
         <span class="comment">// TODO(andreas): Update usage counter on dependent resources.
     </span>}
 

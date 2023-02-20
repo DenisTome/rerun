@@ -86,6 +86,7 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::hash::Hash;
 
 <span class="kw">use </span><span class="kw">crate</span>::debug_label::DebugLabel;
@@ -144,7 +145,8 @@
 
     <span class="doccomment">/// Called by `RenderContext` every frame. Updates statistics and may free unused buffers.
     </span><span class="kw">pub fn </span>frame_maintenance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame_index: u64) {
-        <span class="self">self</span>.pool.frame_maintenance(frame_index);
+        <span class="self">self</span>.pool
+            .frame_maintenance(frame_index, |res| res.destroy());
     }
 
     <span class="doccomment">/// Takes strong buffer handle to ensure the user is still holding on to the buffer.
