@@ -111,6 +111,10 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashMap,
     fs::File,
@@ -151,8 +155,12 @@
     </span><span class="attr">#[serde(skip, default = <span class="string">&quot;::uuid::Uuid::new_v4&quot;</span>)]
     </span><span class="kw">pub </span>session_id: Uuid,
 
-    <span class="attr">#[serde(rename = <span class="string">&quot;metadata&quot;</span>, default)]
-    </span><span class="kw">pub </span>metadata: HashMap&lt;String, Property&gt;,
+    <span class="doccomment">/// Opt-in meta-data you can set via `rerun analytics`.
+    ///
+    /// For instance Rerun employees are encouraged to set `rerun analytics email`.
+    /// For real users, this is always empty.
+    </span><span class="attr">#[serde(rename = <span class="string">&quot;metadata&quot;</span>, default)]
+    </span><span class="kw">pub </span>opt_in_metadata: HashMap&lt;String, Property&gt;,
 
     <span class="doccomment">/// The path of the config file.
     </span><span class="attr">#[serde(rename = <span class="string">&quot;config_file_path&quot;</span>)]
@@ -182,7 +190,7 @@
             <span class="prelude-val">Err</span>(err) <span class="kw">if </span>err.kind() == std::io::ErrorKind::NotFound =&gt; Config {
                 analytics_id: Uuid::new_v4().to_string(),
                 analytics_enabled: <span class="bool-val">true</span>,
-                metadata: Default::default(),
+                opt_in_metadata: Default::default(),
                 session_id: Uuid::new_v4(),
                 is_first_run: <span class="bool-val">true</span>,
                 config_file_path: config_path,

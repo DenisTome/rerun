@@ -1692,49 +1692,6 @@
 <a href="#1692" id="1692">1692</a>
 <a href="#1693" id="1693">1693</a>
 <a href="#1694" id="1694">1694</a>
-<a href="#1695" id="1695">1695</a>
-<a href="#1696" id="1696">1696</a>
-<a href="#1697" id="1697">1697</a>
-<a href="#1698" id="1698">1698</a>
-<a href="#1699" id="1699">1699</a>
-<a href="#1700" id="1700">1700</a>
-<a href="#1701" id="1701">1701</a>
-<a href="#1702" id="1702">1702</a>
-<a href="#1703" id="1703">1703</a>
-<a href="#1704" id="1704">1704</a>
-<a href="#1705" id="1705">1705</a>
-<a href="#1706" id="1706">1706</a>
-<a href="#1707" id="1707">1707</a>
-<a href="#1708" id="1708">1708</a>
-<a href="#1709" id="1709">1709</a>
-<a href="#1710" id="1710">1710</a>
-<a href="#1711" id="1711">1711</a>
-<a href="#1712" id="1712">1712</a>
-<a href="#1713" id="1713">1713</a>
-<a href="#1714" id="1714">1714</a>
-<a href="#1715" id="1715">1715</a>
-<a href="#1716" id="1716">1716</a>
-<a href="#1717" id="1717">1717</a>
-<a href="#1718" id="1718">1718</a>
-<a href="#1719" id="1719">1719</a>
-<a href="#1720" id="1720">1720</a>
-<a href="#1721" id="1721">1721</a>
-<a href="#1722" id="1722">1722</a>
-<a href="#1723" id="1723">1723</a>
-<a href="#1724" id="1724">1724</a>
-<a href="#1725" id="1725">1725</a>
-<a href="#1726" id="1726">1726</a>
-<a href="#1727" id="1727">1727</a>
-<a href="#1728" id="1728">1728</a>
-<a href="#1729" id="1729">1729</a>
-<a href="#1730" id="1730">1730</a>
-<a href="#1731" id="1731">1731</a>
-<a href="#1732" id="1732">1732</a>
-<a href="#1733" id="1733">1733</a>
-<a href="#1734" id="1734">1734</a>
-<a href="#1735" id="1735">1735</a>
-<a href="#1736" id="1736">1736</a>
-<a href="#1737" id="1737">1737</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{any::Any, hash::Hash};
 
 <span class="kw">use </span>ahash::HashMap;
@@ -1757,6 +1714,7 @@
     app_icon::setup_app_icon,
     misc::{AppOptions, Caches, RecordingConfig, ViewerContext},
     ui::{data_ui::ComponentUiRegistry, Blueprint},
+    viewer_analytics::ViewerAnalytics,
 };
 
 <span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
@@ -1823,10 +1781,7 @@
     </span>pending_commands: Vec&lt;Command&gt;,
     cmd_palette: re_ui::CommandPalette,
 
-    <span class="comment">// NOTE: Optional because it is possible to have the `analytics` feature flag enabled while at
-    // the same time opting out of analytics at run-time.
-    </span><span class="attr">#[cfg(all(not(target_arch = <span class="string">&quot;wasm32&quot;</span>), feature = <span class="string">&quot;analytics&quot;</span>))]
-    </span>analytics: <span class="prelude-ty">Option</span>&lt;re_analytics::Analytics&gt;,
+    analytics: ViewerAnalytics,
 
     icon_status: AppIconStatus,
 }
@@ -1877,17 +1832,8 @@
             log_dbs.insert(log_db.recording_id(), log_db);
         }
 
-        <span class="attr">#[cfg(all(not(target_arch = <span class="string">&quot;wasm32&quot;</span>), feature = <span class="string">&quot;analytics&quot;</span>))]
-        </span><span class="kw">let </span>analytics = <span class="kw">match </span>re_analytics::Analytics::new(std::time::Duration::from_secs(<span class="number">2</span>)) {
-            <span class="prelude-val">Ok</span>(analytics) =&gt; {
-                analytics.record(re_analytics::Event::viewer_started());
-                <span class="prelude-val">Some</span>(analytics)
-            }
-            <span class="prelude-val">Err</span>(err) =&gt; {
-                <span class="macro">re_log::error!</span>(%err, <span class="string">&quot;failed to initialize analytics SDK&quot;</span>);
-                <span class="prelude-val">None
-            </span>}
-        };
+        <span class="kw">let </span>analytics = ViewerAnalytics::new();
+        analytics.on_viewer_started();
 
         <span class="self">Self </span>{
             startup_options,
@@ -1911,8 +1857,7 @@
             pending_commands: Default::default(),
             cmd_palette: Default::default(),
 
-            <span class="attr">#[cfg(all(not(target_arch = <span class="string">&quot;wasm32&quot;</span>), feature = <span class="string">&quot;analytics&quot;</span>))]
-            </span>analytics,
+            analytics,
 
             icon_status: AppIconStatus::NotSetTryAgain,
         }
@@ -2362,38 +2307,7 @@
                 <span class="macro">re_log::debug!</span>(<span class="string">&quot;Beginning a new recording: {:?}&quot;</span>, msg.info);
                 <span class="self">self</span>.state.selected_rec_id = msg.info.recording_id;
 
-                <span class="attr">#[cfg(all(not(target_arch = <span class="string">&quot;wasm32&quot;</span>), feature = <span class="string">&quot;analytics&quot;</span>))]
-                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(analytics) = <span class="self">self</span>.analytics.as_mut() {
-                    <span class="kw">use </span>re_analytics::Property;
-                    analytics.default_append_props_mut().extend([
-                        (<span class="string">&quot;application_id&quot;</span>.into(), {
-                            <span class="kw">let </span>prop: Property = msg.info.application_id.<span class="number">0</span>.clone().into();
-                            <span class="kw">if </span>msg.info.is_official_example {
-                                prop
-                            } <span class="kw">else </span>{
-                                prop.hashed()
-                            }
-                        }),
-                        (<span class="string">&quot;recording_id&quot;</span>.into(), {
-                            <span class="kw">let </span>prop: Property = msg.info.recording_id.to_string().into();
-                            <span class="kw">if </span>msg.info.is_official_example {
-                                prop
-                            } <span class="kw">else </span>{
-                                prop.hashed()
-                            }
-                        }),
-                        (
-                            <span class="string">&quot;recording_source&quot;</span>.into(),
-                            msg.info.recording_source.to_string().into(),
-                        ),
-                        (
-                            <span class="string">&quot;is_official_example&quot;</span>.into(),
-                            msg.info.is_official_example.into(),
-                        ),
-                    ]);
-
-                    analytics.record(re_analytics::Event::data_source_opened());
-                }
+                <span class="self">self</span>.analytics.on_new_recording(msg);
             }
 
             <span class="kw">let </span>log_db = <span class="self">self</span>.log_dbs.entry(<span class="self">self</span>.state.selected_rec_id).or_default();

@@ -228,9 +228,62 @@
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Rerun&#39;s analytics SDK.
 //!
-//! All the event we collect analytics about can be found in [`events`].
+//! We never collect any personal identifiable information, and you can always opt-out with `rerun analytics disable`.
+//!
+//! All the data we collect can be found in
+//! &lt;https://github.com/rerun-io/rerun/blob/latest/crates/re_viewer/src/viewer_analytics.rs&gt;.
+
+</span><span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">mod </span>config_native;
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">use </span><span class="self">self</span>::config_native::{Config, ConfigError};
+
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">mod </span>config_web;
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">use </span><span class="self">self</span>::config_web::{Config, ConfigError};
+
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">mod </span>pipeline_native;
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">use </span><span class="self">self</span>::pipeline_native::{Pipeline, PipelineError};
+
+<span class="comment">// TODO(cmc): web pipeline
+</span><span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">mod </span>pipeline_web;
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">use </span><span class="self">self</span>::pipeline_web::{Pipeline, PipelineError};
+
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">mod </span>sink_native;
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">use </span><span class="self">self</span>::sink_native::{PostHogSink, SinkError};
+
+<span class="comment">// TODO(cmc): web sink
+</span><span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">mod </span>sink_web;
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+</span><span class="kw">use </span><span class="self">self</span>::sink_web::{PostHogSink, SinkError};
+
+<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
+</span><span class="kw">pub mod </span>cli;
+
+<span class="comment">// ----------------------------------------------------------------------------
 
 </span><span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::collections::HashMap;
@@ -240,7 +293,18 @@
 <span class="kw">use </span>re_log::trace;
 <span class="kw">use </span>time::OffsetDateTime;
 
-<span class="comment">// ---
+<span class="comment">// ----------------------------------------------------------------------------
+
+</span><span class="doccomment">/// What target triplet (os, cpu) `re_analytics` was compiled for.
+</span><span class="kw">pub const </span>TARGET_TRIPLET: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">&quot;__RERUN_TARGET_TRIPLE&quot;</span>);
+
+<span class="doccomment">/// What git hash of the Rerun repository we were compiled in.
+///
+/// If we are not in the Rerun repository, this will be set
+/// to the `re_analytics` crate version (`CARGO_PKG_VERSION`) instead.
+</span><span class="kw">pub const </span>GIT_HASH: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">&quot;__RERUN_GIT_HASH&quot;</span>);
+
+<span class="comment">// ----------------------------------------------------------------------------
 
 </span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 </span><span class="kw">pub enum </span>EventKind {
@@ -382,81 +446,43 @@
         <span class="kw">let </span>sink = PostHogSink::default();
         <span class="kw">let </span>pipeline = Pipeline::new(<span class="kw-2">&amp;</span>config, tick, sink)<span class="question-mark">?</span>;
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(pipeline) = pipeline.as_ref() {
-            pipeline.record(Event::update_metadata(config.metadata.clone()));
-        }
-
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             config,
             default_append_props: Default::default(),
             pipeline,
-            event_id: AtomicU64::new(<span class="number">1</span>),
-        })
+            event_id: AtomicU64::new(<span class="number">1</span>), <span class="comment">// we skip 0 just to be explicit (zeroes can often be implicit)
+        </span>})
     }
 
     <span class="kw">pub fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Config {
         <span class="kw-2">&amp;</span><span class="self">self</span>.config
     }
 
-    <span class="kw">pub fn </span>default_append_props_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>HashMap&lt;Cow&lt;<span class="lifetime">&#39;static</span>, str&gt;, Property&gt; {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.default_append_props
+    <span class="doccomment">/// Register a property that will be included in all [`EventKind::Append`].
+    </span><span class="kw">pub fn </span>register_append_property(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, prop: <span class="kw">impl </span>Into&lt;Property&gt;) {
+        <span class="self">self</span>.default_append_props.insert(name.into(), prop.into());
     }
 
-    <span class="kw">pub fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>event: Event) {
+    <span class="doccomment">/// Record an event.
+    ///
+    /// It will be extended with an `event_id` and, if this is an [`EventKind::Append`],
+    /// any properties registered with [`Self::register_append_property`].
+    </span><span class="kw">pub fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>event: Event) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pipeline) = <span class="self">self</span>.pipeline.as_ref() {
-            <span class="comment">// Insert default props
-            </span><span class="kw">if </span>event.kind == EventKind::Append {
-                event.props.extend(<span class="self">self</span>.default_append_props.clone());
-            }
+            <span class="kw">if </span>event.kind == EventKind::Append {
+                <span class="comment">// Insert default props
+                </span>event.props.extend(<span class="self">self</span>.default_append_props.clone());
 
-            <span class="comment">// Insert event ID
-            </span>event.props.insert(
-                <span class="string">&quot;event_id&quot;</span>.into(),
-                (<span class="self">self</span>.event_id.fetch_add(<span class="number">1</span>, Ordering::Relaxed) <span class="kw">as </span>i64).into(),
-            );
+                <span class="comment">// Insert event ID
+                </span>event.props.insert(
+                    <span class="string">&quot;event_id&quot;</span>.into(),
+                    (<span class="self">self</span>.event_id.fetch_add(<span class="number">1</span>, Ordering::Relaxed) <span class="kw">as </span>i64).into(),
+                );
+            }
 
             pipeline.record(event);
         }
     }
 }
-
-<span class="comment">// ---
-
-</span><span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">mod </span>config_native;
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">use </span><span class="self">self</span>::config_native::{Config, ConfigError};
-
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">mod </span>config_web;
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">use </span><span class="self">self</span>::config_web::{Config, ConfigError};
-
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">mod </span>pipeline_native;
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">use </span><span class="self">self</span>::pipeline_native::{Pipeline, PipelineError};
-
-<span class="comment">// TODO(cmc): web pipeline
-</span><span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">mod </span>pipeline_web;
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">use </span><span class="self">self</span>::pipeline_web::{Pipeline, PipelineError};
-
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">mod </span>sink_native;
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">use </span><span class="self">self</span>::sink_native::{PostHogSink, SinkError};
-
-<span class="comment">// TODO(cmc): web sink
-</span><span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">mod </span>sink_web;
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
-</span><span class="kw">use </span><span class="self">self</span>::sink_web::{PostHogSink, SinkError};
-
-<span class="attr">#[cfg(not(target_arch = <span class="string">&quot;wasm32&quot;</span>))]
-</span><span class="kw">pub mod </span>cli;
-
-<span class="kw">pub mod </span>events;
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="re_analytics" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

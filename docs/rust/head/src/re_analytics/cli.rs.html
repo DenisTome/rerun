@@ -172,7 +172,7 @@
 
 <span class="kw">pub fn </span>set(props: <span class="kw">impl </span>IntoIterator&lt;Item = (String, Property)&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), CliError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>config = Config::load()<span class="question-mark">?</span>;
-    config.metadata.extend(props);
+    config.opt_in_metadata.extend(props);
     config.save().map_err(Into::into)
 }
 
@@ -203,7 +203,7 @@
 
     What data is collected?
     - The exact set of analytics events and parameters can be found here:
-      https://github.com/rerun-io/rerun/blob/GIT_HASH/crates/re_analytics/src/events.rs
+      https://github.com/rerun-io/rerun/blob/GIT_HASH/crates/re_viewer/src/viewer_analytics.rs
     - We collect high level events about the usage of the Rerun Viewer. For example:
       - The event &#39;Viewer Opened&#39; helps us estimate how often Rerun is used.
       - The event &#39;Data Source Connected&#39; helps us understand if users tend to use live
